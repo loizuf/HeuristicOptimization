@@ -55,13 +55,10 @@ public class KPMPSolution {
     // Index is the name of the vertex, value is the current place on the spine
     private int[] SpineOrder;
     private Set<Arc>[] ArcsPerPage;
-    Arc arc = new Arc(1,2);
 
     public KPMPSolution(int pageNumber, int vertexNumber) {
         SpineOrder = new int[vertexNumber];
         ArcsPerPage = new TreeSet[pageNumber];
-
-        arc.getPage();
     }
 
     public void setNewSpineOrder(int[] newOrder){
@@ -86,9 +83,35 @@ public class KPMPSolution {
         arc.setPage(toPage);
         
     }
-    
-    public int objectiveFunction(int i, int j){
-        // TODO implement
+
+    /* TODO implement
+     * Here we want to go through the ArcsPerPage and compare them for crossings using the formula
+     * Ignore arcs with:
+     *      - Both endpoints to the left of i
+     *      - Both endpoints to the right of j
+     *      - Both endpoints between i and j
+     *      - One endpoint to the left of i, one endpoint to the right of j
+     *
+     * For VertexSwap, this needs to be exclusive, for ArcMove, these checks can be inclusive of i,j
+     * Also VertexSwap needs to compute for every page, ArcMove just for the new one
+     *
+     * Seperate Methods for: Complete, VertexSwap, ArcMove
+     */
+
+    public int objectiveFunction(){
+        int penaltyValue = 0;
+        for (int c = 0; c < ArcsPerPage.length; c++){
+            for (int d = 0; d < ArcsPerPage[c].size()-1; d++){
+            }
+        }
+        return penaltyValue;
+    }
+
+    public int objectiveFunctionVertexSwap(int i, int j){
+        return 0;
+    }
+
+    public int objectiveFunctionArcMove(int i, int j){
         return 0;
     }
 
