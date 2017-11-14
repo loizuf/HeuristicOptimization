@@ -1,22 +1,29 @@
+import java.io.*;
 import java.util.*;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-public class KPMPSolution {
+public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
-    private class Arc implements Comparable<Arc> {
+    private class Arc implements Comparable<Arc>, Serializable {
         private int page;
         // start and end are just names not the spineOrderIndex
         private int start, end;
-        private KPMPSolution solution;
 
-        public Arc(int start, int end){
+        private Arc(int start, int end){
             this.start = start;
             this.end = end;
 
             page = -1;
         }
+
+        /*
+        private Arc(Arc arc){
+            this.start = arc.getStart();
+            this.end = arc.getEnd();
+            this.page = arc.getPage();
+        }*/
 
         private int getStart() {
             return start;
@@ -62,6 +69,7 @@ public class KPMPSolution {
 
     // Index is the name of the vertex, value is the current place on the spine
     private int value;
+
     private int[] SpineOrder;
     private ArrayList<Arc>[] ArcsPerPage;
 
@@ -86,10 +94,18 @@ public class KPMPSolution {
         return value;
     }
 
+    public int[] getSpineOrder() {
+        return SpineOrder;
+    }
+
+    public ArrayList<Arc>[] getArcsPerPage() {
+        return ArcsPerPage;
+    }
+
     /*
-    ** called during initial solution construction to create a new arc and
-    ** add it to the page specified
-     */
+        ** called during initial solution construction to create a new arc and
+        ** add it to the page specified
+         */
     public void addArc(int nameA, int nameB, int page) {
         Arc newArc = new Arc(nameA, nameB);
         newArc.setPage(page);
@@ -116,6 +132,62 @@ public class KPMPSolution {
         ArcsPerPage[toPage].add(arc);
         arc.setPage(toPage);
         value += objectiveFunctionArcMove(arc, fromPage, toPage);
+    }
+
+    // returns best neighbour of the MoveArc Neighbourhood
+    public KPMPSolution getBestArcMoveNeighbour(){
+        KPMPSolution currentBest = this;
+        KPMPSolution newSolution;
+        for(int i=0; i<ArcsPerPage.length; i++){
+            for(Arc arc : ArcsPerPage[i]){
+                for(int j=0; j<ArcsPerPage.length; j++){
+                    newSolution = deepClone(this);
+                    newSolution.moveArc(arc, j);
+                    if(newSolution.compareTo(currentBest)<0){
+                        currentBest = deepClone(newSolution);
+                    }
+                }
+            }
+        }
+        return currentBest;
+    }
+
+    // returns first better neighbour of the MoveArc Neighbourhood
+    public KPMPSolution getFirstArcMoveNeighbour(){
+        KPMPSolution currentBest = this;
+        KPMPSolution newSolution;
+        for(int i=0; i<ArcsPerPage.length; i++){
+            for(Arc arc : ArcsPerPage[i]){
+                for(int j=0; j<ArcsPerPage.length; j++){
+                    newSolution = deepClone(this);
+                    newSolution.moveArc(arc, j);
+                    if(newSolution.compareTo(currentBest)<0){
+                        return newSolution;
+                    }
+                }
+            }
+        }
+        return currentBest;
+    }
+
+    // this still doesn't work
+    public KPMPSolution getRandomArcMoveNeighbour(){
+        Random rand = new Random();
+        int randFromPageNumber;
+        do{
+            randFromPageNumber = rand.nextInt(ArcsPerPage.length-1);
+        }while(ArcsPerPage[randFromPageNumber].size()<1);
+        int randToPageNumber;
+        do{
+            randToPageNumber = rand.nextInt(ArcsPerPage.length-1);
+        }while(randFromPageNumber==randToPageNumber);
+        int randArcNumber = rand.nextInt(ArcsPerPage[randFromPageNumber].size()-1);
+        Arc randArc = ArcsPerPage[randFromPageNumber].get(randArcNumber);
+        System.out.println("arc: " + randArc + ", from: " + randFromPageNumber + ", to: "+ randToPageNumber);
+        KPMPSolution newSolution = deepClone(this);
+        newSolution.moveArc(randArc, randToPageNumber);
+        System.out.println(newSolution.getValue());
+        return newSolution;
     }
 
     /* TODO implement
@@ -158,7 +230,7 @@ public class KPMPSolution {
         Iterator<Arc> itr = page.iterator();
         while (itr.hasNext()) {
             Arc currentArc = itr.next();
-            if (arcsCross(arc, currentArc)){
+            if (doArcsCross(arc, currentArc)){
                 deltaValue++;
             }
         }
@@ -167,7 +239,7 @@ public class KPMPSolution {
         itr = page.iterator();
         while (itr.hasNext()) {
             Arc currentArc = itr.next();
-            if (arcsCross(arc, currentArc)){
+            if (doArcsCross(arc, currentArc)){
                 deltaValue--;
             }
         }
@@ -189,19 +261,6 @@ public class KPMPSolution {
         }
         return deltaValue;
     }
-
-    private boolean arcsCross(Arc arc1, Arc arc2){
-
-        if (getSpineOrderIndex(arc1.getStart()) < getSpineOrderIndex(arc2.getStart()) && getSpineOrderIndex(arc1.getEnd()) < getSpineOrderIndex(arc2.getEnd())){
-            return true;
-        }
-
-        else if (getSpineOrderIndex(arc1.getStart()) > getSpineOrderIndex(arc2.getStart()) && getSpineOrderIndex(arc1.getEnd()) > getSpineOrderIndex(arc2.getEnd())){
-            return true;
-        }
-        return false;
-    }
-
 
     private boolean doArcsCross(Arc arc1, Arc arc2){
         int start1, end1, start2, end2;
@@ -226,4 +285,23 @@ public class KPMPSolution {
         return false;
     }
 
+    public static KPMPSolution deepClone(Object object) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(object);
+            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            return (KPMPSolution) ois.readObject();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public int compareTo(KPMPSolution o) {
+        return Integer.compare(value, o.getValue());
+    }
 }
