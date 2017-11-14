@@ -53,12 +53,13 @@ public class KPMPSolution {
     }
 
     // Index is the name of the vertex, value is the current place on the spine
+    private int value;
     private int[] SpineOrder;
-    private Set<Arc>[] ArcsPerPage;
+    private ArrayList<Arc>[] ArcsPerPage;
 
     public KPMPSolution(int pageNumber, int vertexNumber) {
         SpineOrder = new int[vertexNumber];
-        ArcsPerPage = new TreeSet[pageNumber];
+        ArcsPerPage = new ArrayList[pageNumber];
     }
 
     public void setNewSpineOrder(int[] newOrder){
@@ -70,18 +71,26 @@ public class KPMPSolution {
         return SpineOrder[name];
     }
 
+    public void addArc(int nameA, int nameB, int page) {
+        Arc newArc = new Arc(nameA, nameB);
+        newArc.setPage(page);
+
+    }
+
     // Uses index of spine order to switch two vertices
     public void switchSpineVertex(int firstVertex, int secondVertex){
         int temp = SpineOrder[firstVertex];
         SpineOrder[firstVertex] = SpineOrder[secondVertex];
         SpineOrder[secondVertex] = temp;
+        value += objectiveFunctionVertexSwap(firstVertex, secondVertex);
     }
 
     public void moveArc(Arc arc, int toPage){
-        ArcsPerPage[arc.getPage()].remove(arc);
+        int fromPage = arc.getPage();
+        ArcsPerPage[fromPage].remove(arc);
         ArcsPerPage[toPage].add(arc);
         arc.setPage(toPage);
-        
+        value += objectiveFunctionArcMove(arc, fromPage, toPage);
     }
 
     /* TODO implement
@@ -98,21 +107,57 @@ public class KPMPSolution {
      * Seperate Methods for: Complete, VertexSwap, ArcMove
      */
 
-    public int objectiveFunction(){
-        int penaltyValue = 0;
+    private int objectiveFunctionVertexSwap(int i, int j){
+        int deltaValue = 0;
         for (int c = 0; c < ArcsPerPage.length; c++){
-            for (int d = 0; d < ArcsPerPage[c].size()-1; d++){
+            Iterator<Arc> itr = ArcsPerPage[c].iterator();
+            while(itr.hasNext()){
+                Arc currentArc = itr.next();
+                if (    getSpineOrderIndex(currentArc.getStart()) == i ||
+                        getSpineOrderIndex(currentArc.getStart()) == j ||
+                        getSpineOrderIndex(currentArc.getEnd()) == i ||
+                        getSpineOrderIndex(currentArc.getEnd()) == j){
+
+                    deltaValue += objectiveFunctionArcMove(currentArc, currentArc.getPage(), currentArc.getPage());
+                }
             }
         }
-        return penaltyValue;
+        return deltaValue;
+
     }
 
-    public int objectiveFunctionVertexSwap(int i, int j){
-        return 0;
+    // We only need to check two pages (from and to)
+    private int objectiveFunctionArcMove(Arc arc, int fromPage, int toPage){
+        int deltaValue = 0;
+
+        ArrayList<Arc> page = ArcsPerPage[toPage];
+        Iterator<Arc> itr = page.iterator();
+        while (itr.hasNext()) {
+            Arc currentArc = itr.next();
+            if (arcsCross(arc, currentArc)){
+                deltaValue++;
+            }
+        }
+
+        page = ArcsPerPage[fromPage];
+        itr = page.iterator();
+        while (itr.hasNext()) {
+            Arc currentArc = itr.next();
+            if (arcsCross(arc, currentArc)){
+                deltaValue--;
+            }
+        }
+
+        return deltaValue;
     }
 
-    public int objectiveFunctionArcMove(int i, int j){
-        return 0;
+    private boolean arcsCross(Arc arc1, Arc arc2){
+        if (getSpineOrderIndex(arc1.getStart()) < getSpineOrderIndex(arc2.getStart()) && getSpineOrderIndex(arc1.getEnd()) < getSpineOrderIndex(arc2.getEnd())){
+            return true;
+        } else if (getSpineOrderIndex(arc1.getStart()) > getSpineOrderIndex(arc2.getStart()) && getSpineOrderIndex(arc1.getEnd()) > getSpineOrderIndex(arc2.getEnd())){
+            return true;
+        }
+        return false;
     }
 
 }

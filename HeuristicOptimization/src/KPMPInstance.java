@@ -1,4 +1,4 @@
-package at.ac.tuwien.ac.heuoptws15;
+
 
 import java.io.File;
 import java.io.FileNotFoundException;
