@@ -43,4 +43,14 @@ public class Main {
             e.printStackTrace();
         }
     }
+
+    // this creates an initial solution which is hopefully not all that bad
+    private KPMPSolution deterministicConstruction(){
+        return null;
+    }
+
+    // this returns a non deterministic initial solution which might diversify starting points
+    private KPMPSolution randomConstruction(){
+        return null;
+    }
 }
