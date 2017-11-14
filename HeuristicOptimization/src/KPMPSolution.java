@@ -1,5 +1,8 @@
 import java.util.*;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 public class KPMPSolution {
 
     private class Arc implements Comparable<Arc> {
@@ -50,6 +53,11 @@ public class KPMPSolution {
             }
             return Integer.compare(minimum, compMinimum);
         }
+
+        @Override
+        public String toString(){
+            return "(" + this.start + "," + this.end + ")";
+        }
     }
 
     // Index is the name of the vertex, value is the current place on the spine
@@ -60,6 +68,9 @@ public class KPMPSolution {
     public KPMPSolution(int pageNumber, int vertexNumber) {
         SpineOrder = new int[vertexNumber];
         ArcsPerPage = new ArrayList[pageNumber];
+        for(int i = 0; i < pageNumber; i++){
+            ArcsPerPage[i] = new ArrayList<Arc>();
+        }
     }
 
     public void setNewSpineOrder(int[] newOrder){
@@ -71,9 +82,19 @@ public class KPMPSolution {
         return SpineOrder[name];
     }
 
+    public int getValue() {
+        return value;
+    }
+
+    /*
+    ** called during initial solution construction to create a new arc and
+    ** add it to the page specified
+     */
     public void addArc(int nameA, int nameB, int page) {
         Arc newArc = new Arc(nameA, nameB);
         newArc.setPage(page);
+        ArcsPerPage[page].add(newArc);
+        value += objectiveFunctionAddArc(newArc, page);
 
     }
 
@@ -85,6 +106,10 @@ public class KPMPSolution {
         value += objectiveFunctionVertexSwap(firstVertex, secondVertex);
     }
 
+    /*
+    ** Moves the given arc from its current page to
+    * the page specified in the arguments
+     */
     public void moveArc(Arc arc, int toPage){
         int fromPage = arc.getPage();
         ArcsPerPage[fromPage].remove(arc);
@@ -117,7 +142,6 @@ public class KPMPSolution {
                         getSpineOrderIndex(currentArc.getStart()) == j ||
                         getSpineOrderIndex(currentArc.getEnd()) == i ||
                         getSpineOrderIndex(currentArc.getEnd()) == j){
-
                     deltaValue += objectiveFunctionArcMove(currentArc, currentArc.getPage(), currentArc.getPage());
                 }
             }
@@ -151,12 +175,54 @@ public class KPMPSolution {
         return deltaValue;
     }
 
+    private int objectiveFunctionAddArc(Arc arc, int toPage){
+        int deltaValue = 0;
+
+        ArrayList<Arc> page = ArcsPerPage[toPage];
+        Iterator<Arc> itr = page.iterator();
+        while (itr.hasNext()) {
+            Arc currentArc = itr.next();
+            if (doArcsCross(arc, currentArc)){
+                System.out.println("found a cross with:" + arc + " " + currentArc);
+                deltaValue++;
+            }
+        }
+        return deltaValue;
+    }
+
     private boolean arcsCross(Arc arc1, Arc arc2){
+
         if (getSpineOrderIndex(arc1.getStart()) < getSpineOrderIndex(arc2.getStart()) && getSpineOrderIndex(arc1.getEnd()) < getSpineOrderIndex(arc2.getEnd())){
             return true;
-        } else if (getSpineOrderIndex(arc1.getStart()) > getSpineOrderIndex(arc2.getStart()) && getSpineOrderIndex(arc1.getEnd()) > getSpineOrderIndex(arc2.getEnd())){
+        }
+
+        else if (getSpineOrderIndex(arc1.getStart()) > getSpineOrderIndex(arc2.getStart()) && getSpineOrderIndex(arc1.getEnd()) > getSpineOrderIndex(arc2.getEnd())){
             return true;
         }
+        return false;
+    }
+
+
+    private boolean doArcsCross(Arc arc1, Arc arc2){
+        int start1, end1, start2, end2;
+
+        if(arc1.compareTo(arc2) <= 0){
+            start1 = min(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
+            end1 =  max(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
+            start2 = min(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
+            end2 =  max(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
+        }
+        else{
+            start2 = min(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
+            end2 =  max(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
+            start1 = min(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
+            end1 =  max(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
+        }
+
+        if (start1 < start2 && end1 < end2 && start2 < end1){
+            return true;
+        }
+
         return false;
     }
 
