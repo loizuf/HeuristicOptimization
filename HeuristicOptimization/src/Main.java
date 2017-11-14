@@ -24,13 +24,16 @@ public class Main {
             System.out.println();
             System.out.println("All arcs initialized to page 0");
             System.out.println("Current objective value: " + sol.getValue());
+
             KPMPSolution first = sol.getFirstArcMoveNeighbour();
             System.out.println("Current first-objective value: " + first.getValue());
+
             KPMPSolution best = sol.getBestArcMoveNeighbour();
             System.out.println("Current best-objective value: " + best.getValue());
+
             for (int i = 0; i < 100; i++) {
                 KPMPSolution random = sol.getRandomArcMoveNeighbour();
-                //System.out.println("Current random-objective value: " + random.getValue());
+                System.out.println("Current random-objective value: " + random.getValue());
             }
 
 

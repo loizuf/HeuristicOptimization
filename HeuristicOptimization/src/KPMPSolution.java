@@ -139,10 +139,11 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         KPMPSolution currentBest = this;
         KPMPSolution newSolution;
         for(int i=0; i<ArcsPerPage.length; i++){
-            for(Arc arc : ArcsPerPage[i]){
-                for(int j=0; j<ArcsPerPage.length; j++){
+            for(int j=0; j< ArcsPerPage[i].size(); j++){
+                for(int k=0; k<ArcsPerPage.length; k++){
                     newSolution = deepClone(this);
-                    newSolution.moveArc(arc, j);
+                    Arc arc = newSolution.getArcsPerPage()[i].get(j);
+                    newSolution.moveArc(arc, k);
                     if(newSolution.compareTo(currentBest)<0){
                         currentBest = deepClone(newSolution);
                     }
@@ -157,10 +158,11 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         KPMPSolution currentBest = this;
         KPMPSolution newSolution;
         for(int i=0; i<ArcsPerPage.length; i++){
-            for(Arc arc : ArcsPerPage[i]){
-                for(int j=0; j<ArcsPerPage.length; j++){
+            for(int j=0; j< ArcsPerPage[i].size(); j++){
+                for(int k=0; k<ArcsPerPage.length; k++){
                     newSolution = deepClone(this);
-                    newSolution.moveArc(arc, j);
+                    Arc arc = newSolution.getArcsPerPage()[i].get(j);
+                    newSolution.moveArc(arc, k);
                     if(newSolution.compareTo(currentBest)<0){
                         return newSolution;
                     }
@@ -172,6 +174,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
     // this still doesn't work
     public KPMPSolution getRandomArcMoveNeighbour(){
+
         Random rand = new Random();
         int randFromPageNumber;
         do{
@@ -182,11 +185,9 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
             randToPageNumber = rand.nextInt(ArcsPerPage.length-1);
         }while(randFromPageNumber==randToPageNumber);
         int randArcNumber = rand.nextInt(ArcsPerPage[randFromPageNumber].size()-1);
-        Arc randArc = ArcsPerPage[randFromPageNumber].get(randArcNumber);
-        System.out.println("arc: " + randArc + ", from: " + randFromPageNumber + ", to: "+ randToPageNumber);
         KPMPSolution newSolution = deepClone(this);
+        Arc randArc = newSolution.getArcsPerPage()[randFromPageNumber].get(randArcNumber);
         newSolution.moveArc(randArc, randToPageNumber);
-        System.out.println(newSolution.getValue());
         return newSolution;
     }
 
