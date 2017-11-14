@@ -23,17 +23,17 @@ public class Main {
 
             System.out.println();
             System.out.println("All arcs initialized to page 0");
-            System.out.println("Current objective value: " + sol.getValue());
+            System.out.println("Current objective value: " + sol.getValue() + "\n");
 
-            KPMPSolution first = sol.getFirstArcMoveNeighbour();
-            System.out.println("Current first-objective value: " + first.getValue());
+            KPMPSolution first = sol.getFirstSpineSwapNeighbour();
+            System.out.println("First: \n" + first);
 
-            KPMPSolution best = sol.getBestArcMoveNeighbour();
-            System.out.println("Current best-objective value: " + best.getValue());
+            KPMPSolution best = sol.getBestSpineSwapNeighbour();
+            System.out.println("\nBest: \n" + best);
 
-            for (int i = 0; i < 100; i++) {
-                KPMPSolution random = sol.getRandomArcMoveNeighbour();
-                System.out.println("Current random-objective value: " + random.getValue());
+            for (int i = 0; i < 10; i++) {
+                KPMPSolution random = sol.getRandomSpineSwapNeighbour();
+                System.out.println("\nRandom: \n" + random);
             }
 
 

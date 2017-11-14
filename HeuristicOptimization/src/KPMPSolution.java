@@ -6,11 +6,13 @@ import static java.lang.Math.min;
 
 public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
+    // Internal Class representation of Arcs
     private class Arc implements Comparable<Arc>, Serializable {
-        private int page;
         // start and end are just names not the spineOrderIndex
         private int start, end;
+        private int page;
 
+        // Constructor, page is initialized as -1
         private Arc(int start, int end){
             this.start = start;
             this.end = end;
@@ -18,13 +20,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
             page = -1;
         }
 
-        /*
-        private Arc(Arc arc){
-            this.start = arc.getStart();
-            this.end = arc.getEnd();
-            this.page = arc.getPage();
-        }*/
-
+        /* START Getter */
         private int getStart() {
             return start;
         }
@@ -36,11 +32,13 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         private int getPage() {
             return page;
         }
+        /* END Getter */
 
         private void setPage(int page) {
             this.page = page;
         }
 
+        // Comparison by first and then by second endpoint
         @Override
         public int compareTo(Arc compareArc) {
             int minimum = start;
@@ -69,10 +67,10 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
     // Index is the name of the vertex, value is the current place on the spine
     private int value;
-
     private int[] SpineOrder;
     private ArrayList<Arc>[] ArcsPerPage;
 
+    // Constructor
     public KPMPSolution(int pageNumber, int vertexNumber) {
         SpineOrder = new int[vertexNumber];
         ArcsPerPage = new ArrayList[pageNumber];
@@ -81,10 +79,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         }
     }
 
-    public void setNewSpineOrder(int[] newOrder){
-        SpineOrder = newOrder;
-    }
-
+    /* START Getter */
     // gives back the current index of vertex with the NAME name
     public int getSpineOrderIndex(int name) {
         return SpineOrder[name];
@@ -101,11 +96,14 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
     public ArrayList<Arc>[] getArcsPerPage() {
         return ArcsPerPage;
     }
+    /* END Getter */
 
-    /*
-        ** called during initial solution construction to create a new arc and
-        ** add it to the page specified
-         */
+    // called during initial solution to set an initial Spine ordering. REMEMBER: Index is NAME, Value is Position
+    public void setNewSpineOrder(int[] newOrder){
+        SpineOrder = newOrder;
+    }
+
+    // called during initial solution construction to create a new arc and add it to the page specified
     public void addArc(int nameA, int nameB, int page) {
         Arc newArc = new Arc(nameA, nameB);
         newArc.setPage(page);
@@ -114,18 +112,60 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
     }
 
-    // Uses index of spine order to switch two vertices
+    // Uses NAME of vertex order to switch two vertices
     public void switchSpineVertex(int firstVertex, int secondVertex){
         int temp = SpineOrder[firstVertex];
         SpineOrder[firstVertex] = SpineOrder[secondVertex];
         SpineOrder[secondVertex] = temp;
-        value += objectiveFunctionVertexSwap(firstVertex, secondVertex);
+        value = objectiveFunctionVertexSwap();
     }
 
-    /*
-    ** Moves the given arc from its current page to
-    * the page specified in the arguments
-     */
+    /*here go the other neighbourhoods*/
+
+    // returns best neighbour of the SpineSwap Neighbourhood
+    public KPMPSolution getBestSpineSwapNeighbour(){
+        KPMPSolution currentBest = this;
+        KPMPSolution newSolution;
+        for (int i = 0; i < SpineOrder.length-1; i++) {
+            for (int j = i+1; j < SpineOrder.length; j++) {
+
+                newSolution = deepClone(this);
+                newSolution.switchSpineVertex(i, j);
+                if(newSolution.compareTo(currentBest)<0){
+                    currentBest = deepClone(newSolution);
+                }
+            }
+        }
+        return currentBest;
+    }
+
+    // returns first better neighbour of the SpineSwap Neighbourhood
+    public KPMPSolution getFirstSpineSwapNeighbour(){
+        KPMPSolution currentBest = this;
+        KPMPSolution newSolution;
+        for (int i = 0; i < SpineOrder.length-1; i++) {
+            for (int j = i+1; j < SpineOrder.length; j++) {
+                newSolution = deepClone(this);
+                newSolution.switchSpineVertex(i, j);
+                if(newSolution.compareTo(currentBest)<0){
+                    return newSolution;
+                }
+            }
+        }
+        return currentBest;
+    }
+
+    // returns a random neighbour of the SpineSwap Neighbourhood, not necessarily better
+    public KPMPSolution getRandomSpineSwapNeighbour(){
+        Random rand = new Random();
+        int i = rand.nextInt(getSpineOrder().length);
+        int j = rand.nextInt(getSpineOrder().length);
+        KPMPSolution newSolution = deepClone(this);
+        newSolution.switchSpineVertex(i, j);
+        return newSolution;
+    }
+
+    // Moves the given arc from its current page to the page specified in the arguments
     public void moveArc(Arc arc, int toPage){
         int fromPage = arc.getPage();
         ArcsPerPage[fromPage].remove(arc);
@@ -172,7 +212,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         return currentBest;
     }
 
-    // this still doesn't work
+    // returns a random neighbour of the MoveArc Neighbourhood, not necessarily better
     public KPMPSolution getRandomArcMoveNeighbour(){
 
         Random rand = new Random();
@@ -191,38 +231,24 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         return newSolution;
     }
 
-    /* TODO implement
-     * Here we want to go through the ArcsPerPage and compare them for crossings using the formula
-     * Ignore arcs with:
-     *      - Both endpoints to the left of i
-     *      - Both endpoints to the right of j
-     *      - Both endpoints between i and j
-     *      - One endpoint to the left of i, one endpoint to the right of j
-     *
-     * For VertexSwap, this needs to be exclusive, for ArcMove, these checks can be inclusive of i,j
-     * Also VertexSwap needs to compute for every page, ArcMove just for the new one
-     *
-     * Seperate Methods for: Complete, VertexSwap, ArcMove
-     */
-
-    private int objectiveFunctionVertexSwap(int i, int j){
-        int deltaValue = 0;
+    // Incremental evaluation for swapping two vertices
+    private int objectiveFunctionVertexSwap(){
+        int newValue = 0;
         for (int c = 0; c < ArcsPerPage.length; c++){
-            Iterator<Arc> itr = ArcsPerPage[c].iterator();
-            while(itr.hasNext()){
-                Arc currentArc = itr.next();
-                if (    getSpineOrderIndex(currentArc.getStart()) == i ||
-                        getSpineOrderIndex(currentArc.getStart()) == j ||
-                        getSpineOrderIndex(currentArc.getEnd()) == i ||
-                        getSpineOrderIndex(currentArc.getEnd()) == j){
-                    deltaValue += objectiveFunctionArcMove(currentArc, currentArc.getPage(), currentArc.getPage());
+            for (int k = 0; k < ArcsPerPage[c].size(); k++) {
+                Arc currentArc = ArcsPerPage[c].get(k);
+                for (int l = k+1; l < ArcsPerPage[c].size(); l++) {
+                    if(doArcsCross(currentArc, ArcsPerPage[c].get(l))){
+                        newValue++;
+                    }
                 }
+
             }
         }
-        return deltaValue;
-
+        return newValue;
     }
 
+    // Incremental evaluation for moving an Arc
     // We only need to check two pages (from and to)
     private int objectiveFunctionArcMove(Arc arc, int fromPage, int toPage){
         int deltaValue = 0;
@@ -248,6 +274,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         return deltaValue;
     }
 
+    // Incremental evaluation for initial adding of arcs to solution
     private int objectiveFunctionAddArc(Arc arc, int toPage){
         int deltaValue = 0;
 
@@ -256,37 +283,33 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         while (itr.hasNext()) {
             Arc currentArc = itr.next();
             if (doArcsCross(arc, currentArc)){
-                System.out.println("found a cross with:" + arc + " " + currentArc);
                 deltaValue++;
             }
         }
         return deltaValue;
     }
 
+    // checks two arcs for crossing
     private boolean doArcsCross(Arc arc1, Arc arc2){
         int start1, end1, start2, end2;
 
-        if(arc1.compareTo(arc2) <= 0){
-            start1 = min(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
-            end1 =  max(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
-            start2 = min(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
-            end2 =  max(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
-        }
-        else{
-            start2 = min(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
-            end2 =  max(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
-            start1 = min(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
-            end1 =  max(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
-        }
+        start1 = min(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
+        end1 =  max(getSpineOrderIndex(arc1.getStart()), getSpineOrderIndex(arc1.getEnd()));
+        start2 = min(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
+        end2 =  max(getSpineOrderIndex(arc2.getStart()), getSpineOrderIndex(arc2.getEnd()));
 
         if (start1 < start2 && end1 < end2 && start2 < end1){
+            return true;
+        } else if (start2 < start1 && end2 < end1 && start1 < end2){
             return true;
         }
 
         return false;
+
     }
 
-    public static KPMPSolution deepClone(Object object) {
+    // creates a clone with actually new subobjects instead of references to old Arcs
+    private static KPMPSolution deepClone(Object object) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -304,5 +327,24 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
     @Override
     public int compareTo(KPMPSolution o) {
         return Integer.compare(value, o.getValue());
+    }
+
+    @Override
+    public String toString(){
+        String toString = "Spine-Order: ";
+        for (int i = 0; i < SpineOrder.length; i++) {
+            toString += SpineOrder[i];
+        }
+
+        toString += "\nValue: " + value;
+        toString += "\nPages:";
+        for (int i = 0; i < ArcsPerPage.length; i++) {
+            toString += "\n(";
+            for (int j = 0; j < ArcsPerPage[i].size(); j++) {
+                toString += getArcsPerPage()[i].get(j);
+            }
+            toString += ")";
+        }
+        return toString;
     }
 }
