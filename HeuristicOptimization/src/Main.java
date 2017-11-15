@@ -42,11 +42,14 @@ public class Main {
             KPMPSolution best = sol.getBestSpineSwapNeighbour();
             System.out.println("\nBest: \n" + best);
 
-            for (int i = 0; i < 10; i++) {
+            /*KPMPSolution bestLocalSearch = sol.simulatedAnnealing(-1,4,-1,3,0.95,8);
+            System.out.println("\nBest VND:" + bestLocalSearch);*/
+
+            /*for (int i = 0; i < 10; i++) {
                 KPMPSolution random = sol.getRandomSpineSwapNeighbour();
                 System.out.println("\nRandom: \n" + random);
-            }
-            */
+
+        */
 
 
 
@@ -207,4 +210,5 @@ public class Main {
             ar[i] = a;
         }
     }
+
 }

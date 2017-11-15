@@ -1,8 +1,9 @@
+import org.omg.CORBA.NO_IMPLEMENT;
+
 import java.io.*;
 import java.util.*;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static java.lang.Math.*;
 
 public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
@@ -124,6 +125,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
     // returns best neighbour of the SpineSwap Neighbourhood
     public KPMPSolution getBestSpineSwapNeighbour(){
+        System.out.println("Getting the best vertex swap now...");
         KPMPSolution currentBest = this;
         KPMPSolution newSolution;
         for (int i = 0; i < SpineOrder.length-1; i++) {
@@ -176,6 +178,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
     // returns best neighbour of the MoveArc Neighbourhood
     public KPMPSolution getBestArcMoveNeighbour(){
+        System.out.println("Getting the best arc movement now...");
         KPMPSolution currentBest = this;
         KPMPSolution newSolution;
         for(int i=0; i<ArcsPerPage.length; i++){
@@ -287,6 +290,128 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
             }
         }
         return deltaValue;
+    }
+    /*
+    * step specifies step function strategy (0 for random, <0 for first, >0 for best)
+    * neighborhood specifies which neighborhood structure is being used to determine the neighbor (<0 for spine swap, >=0 for arc movement)
+     */
+    private KPMPSolution getNeighbor(int step, int neighborhood){
+
+        if(neighborhood >= 0){
+            if(step == 0){
+                return this.getRandomArcMoveNeighbour();
+            }
+            else if (step < 0) {
+                return this.getFirstArcMoveNeighbour();
+            }
+            else {
+                return this.getBestArcMoveNeighbour();
+            }
+        }
+        else {
+            if(step == 0){
+                return this.getRandomSpineSwapNeighbour();
+            }
+            else if (step < 0) {
+                return this.getFirstSpineSwapNeighbour();
+            }
+            else {
+                return this.getBestSpineSwapNeighbour();
+            }
+        }
+
+    }
+    /*
+    * step specifies step function strategy (0 for random, <0 for first, >0 for best)
+    * neighborhood specifies which neighborhood structure is being used to determine the neighbor (>=0 for arc movement, <0 for spine swap)
+    * improvementRequired is a stopping criterium, if it's set to true, we do not continue local search if there was no improvement in the
+    * previous step
+    * maxIterations is a stopping criterium, if it's set to greater than 0 local search will stop after maxIterations iterations,
+    * if it's set to <= 0, it is ignored.
+    * TODO: limit this to 15 minutes CPU time
+    */
+    public KPMPSolution localSearch(int step, int neighborhood, boolean improvementRequired, int maxIterations){
+        KPMPSolution bestSolution = this;
+        KPMPSolution solution = this;
+        boolean cont = true;
+        int iteration = maxIterations;
+
+        while(cont) {
+            solution = solution.getNeighbor(step, neighborhood);
+            if(solution.compareTo(bestSolution) < 0){
+                bestSolution = deepClone(solution);
+            }
+            else{
+                if(improvementRequired){
+                    cont = false;
+                }
+            }
+            if(iteration > 0){
+                    iteration -= 1;
+                    cont = !(iteration == 0);
+            }
+
+        }
+        return bestSolution;
+    }
+
+    public KPMPSolution vndSearch(){
+
+        KPMPSolution currentSolution = this;
+        int neighborhood = -1; //start with the smaller neighborhood, in our case spine swap (<0)
+
+        do{
+            KPMPSolution nextSolution = currentSolution.getNeighbor(1, neighborhood); //get best neighbour wrt currently considered neigh
+            if(nextSolution.compareTo(currentSolution) < 0){
+                currentSolution = nextSolution;
+                neighborhood = -1;
+            }
+            else{
+                neighborhood++;
+            }
+        }while(neighborhood <= 0);
+        return currentSolution;
+    }
+
+      /*
+      *TODO limit this to 15 min CPU time
+      * currently only geometric cooling supported with T = T * alpha, where alpha is a given parameter < 1
+      * neighborhood - specifies which neighborhood structure to use (<0 for spine swap, >=0 for arc movement)
+      * initialTemp - set initial temperature
+      * endTemp - if negative then it's ignored, otherwise the search stops when endTemp temperature is reached
+      * maxNoImprovement - if negative it's ignored, otherwise the search stops when there were no improvements
+      * over the last maxNoImprovement number of iterations
+      * int equilibrium - the number of iterations before the temperature is changed
+      */
+    public KPMPSolution simulatedAnnealing(int neighborhood, double initialTemp, double endTemp, int maxNoImprovement, double alpha, int equilibrium){
+        int t = 0;
+        double temperature = initialTemp;
+        boolean stop = false;
+        KPMPSolution currentSolution = this;
+        int noImprovements = 0;
+
+        do{
+            do{
+                KPMPSolution nextSolution = currentSolution.getNeighbor(0, neighborhood);
+                if(nextSolution.compareTo(currentSolution)<0){
+                    currentSolution = nextSolution;
+                }else{
+                    double r = Math.random();
+                    if(r < exp(abs(currentSolution.getValue()-nextSolution.getValue())/temperature)){
+                        currentSolution = nextSolution;
+                        noImprovements++;
+                    }
+                }
+                t++;
+                equilibrium--;
+            }while(equilibrium!=0);
+            temperature = temperature * alpha;
+            if((endTemp >=0 && temperature >= endTemp) || (maxNoImprovement>=0 && noImprovements>=maxNoImprovement)){
+                stop = true;
+            }
+        }while(!stop);
+
+        return currentSolution;
     }
 
     // checks two arcs for crossing
