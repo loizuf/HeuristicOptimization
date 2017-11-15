@@ -288,6 +288,70 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         }
         return deltaValue;
     }
+    /*
+    * step specifies step function strategy (0 for random, <0 for first, >0 for best)
+    * neighborhood specifies which neighborhood structure is being used to determine the neighbor (<0 for arc movement, >=0 for spine swap)
+     */
+    public KPMPSolution localSearchStep(int step, int neighborhood){
+
+        if(neighborhood < 0){
+            if(step == 0){
+                return this.getRandomArcMoveNeighbour();
+            }
+            else if (step < 0) {
+                return this.getFirstArcMoveNeighbour();
+            }
+            else {
+                return this.getBestArcMoveNeighbour();
+            }
+        }
+        else {
+            if(step == 0){
+                return this.getRandomSpineSwapNeighbour();
+            }
+            else if (step < 0) {
+                return this.getFirstSpineSwapNeighbour();
+            }
+            else {
+                return this.getBestSpineSwapNeighbour();
+            }
+        }
+
+    }
+    /*
+    * step specifies step function strategy (0 for random, <0 for first, >0 for best)
+    * neighborhood specifies which neighborhood structure is being used to determine the neighbor (<0 for arc movement, >=0 for spine swap)
+    * improvementRequired is a stopping criterium, if it's set to true, we do not continue local search if there was no improvement in the
+    * previous step
+    * maxIterations is a stopping criterium, if it's set to greater than 0 local search will stop after maxIterations iterations,
+    * if it's set to <= 0, it is ignored.
+    * TODO: limit this to 15 minutes CPU time
+    */
+    public KPMPSolution localSearch(int step, int neighborhood, boolean improvementRequired, int maxIterations){
+        KPMPSolution bestSolution = this;
+        KPMPSolution solution = this;
+        boolean cont = true;
+        int iteration = maxIterations;
+
+        while(cont) {
+            System.out.println("Current solution in while "+solution);
+            solution = solution.localSearchStep(step, neighborhood);
+            if(solution.compareTo(bestSolution) < 0){
+                bestSolution = deepClone(solution);
+            }
+            else{
+                if(improvementRequired){
+                    cont = false;
+                }
+            }
+            if(iteration > 0){
+                    iteration -= 1;
+                    cont = !(iteration == 0);
+            }
+
+        }
+        return bestSolution;
+    }
 
     // checks two arcs for crossing
     private boolean doArcsCross(Arc arc1, Arc arc2){

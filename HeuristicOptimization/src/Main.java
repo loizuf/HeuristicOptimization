@@ -31,6 +31,9 @@ public class Main {
             KPMPSolution best = sol.getBestSpineSwapNeighbour();
             System.out.println("\nBest: \n" + best);
 
+            KPMPSolution bestLocalSearch = sol.localSearch(1,-1,true, 0);
+            System.out.println("\nBest local search:" + bestLocalSearch);
+
             for (int i = 0; i < 10; i++) {
                 KPMPSolution random = sol.getRandomSpineSwapNeighbour();
                 System.out.println("\nRandom: \n" + random);
@@ -53,4 +56,6 @@ public class Main {
     private KPMPSolution randomConstruction(){
         return null;
     }
+    
+
 }
