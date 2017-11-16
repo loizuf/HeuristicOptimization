@@ -6,7 +6,7 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-            KPMPInstance inst = KPMPInstance.readInstance("instances/instance-11.txt");
+            KPMPInstance inst = KPMPInstance.readInstance("instances/instance-07.txt");
 
             System.out.println(deterministicConstruction(inst));
             System.out.println(randomConstruction(inst));
@@ -88,6 +88,7 @@ public class Main {
 
         // distribute arcs among pages
         // one starting point is alsways the same page
+        /*
         int currentPage = 0;
         boolean[][] mat = inst.getAdjacencyMatrix();
         for(int i = 0; i < mat.length; i++){
@@ -105,43 +106,38 @@ public class Main {
                 }
             }
         }
+        return sol;*/
+
+        // The part below this point sorts arcs by their length
+        int arcNumber = 0;
+        for (int i = 0; i < list.size(); i++) {
+            arcNumber += list.get(i).size();
+        }
+        int [][] array2 = new int[arcNumber/2][3];
+        int c = 0;
+        boolean[][] mat = inst.getAdjacencyMatrix();
+        for(int i = 0; i < mat.length; i++){
+            for (int j = i; j < mat[i].length; j++) {
+                if(mat[i][j]){
+                    array2[c][0] = i;
+                    array2[c][1] = j;
+                    array2[c][2] = j-i;
+                    c++;
+                }
+            }
+        }
+        // This sorts arcs by their length
+        java.util.Arrays.sort(array2, new java.util.Comparator<int[]>() {
+            public int compare(int[] a, int[] b) {
+                return Integer.compare(a[2], b[2]);
+            }
+        });
+        for (int i = 0; i < array2.length; i++) {
+            sol.addArcToBestPage(array2[i][0], array2[i][1]);
+        }
         return sol;
 
-            /* The part below this point sorts arcs by their length
-            int arcNumber = 0;
-            for (int i = 0; i < list.size(); i++) {
-                arcNumber += list.get(i).size();
-            }
-            int [][] array2 = new int[arcNumber/2][3];
-            int c = 0;
-            boolean[][] mat = inst.getAdjacencyMatrix();
-            for(int i = 0; i < mat.length; i++){
-                for (int j = i; j < mat[i].length; j++) {
-                    if(mat[i][j]){
-                        array2[c][0] = i;
-                        array2[c][1] = j;
-                        array2[c][2] = j-i;
-                        c++;
-                    }
-                }
-            }
-
-            for (int i = 0; i < array2.length; i++) {
-                String out = "(" + array2[i][0] + ", " + array2[i][1] + ", " + array2[i][2] + ")";
-                System.out.println(out);
-            }
-            System.out.println("\n");
-            java.util.Arrays.sort(array2, new java.util.Comparator<int[]>() {
-                public int compare(int[] a, int[] b) {
-                    return Integer.compare(a[2], b[2]);
-                }
-            });
-
-            for (int i = 0; i < array2.length; i++) {
-                String out = "(" + array2[i][0] + ", " + array2[i][1] + ", " + array2[i][2] + ")";
-                System.out.println(out);
-            }
-            */
+        // Now we add arcs to their repsective best Page
     }
 
     // this returns a non deterministic initial solution which might diversify starting points
@@ -169,6 +165,7 @@ public class Main {
                 order[array.length - 1 - i/2] = array[i][0];
             }
         }
+        shuffleArray(order);
         sol.setNewSpineOrder(order);
 
         // distribute arcs among pages

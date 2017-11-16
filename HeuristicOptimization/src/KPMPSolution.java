@@ -110,7 +110,32 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         newArc.setPage(page);
         ArcsPerPage[page].add(newArc);
         value += objectiveFunctionAddArc(newArc, page);
+    }
 
+    // called during initial solution construction to create a new arc and add it to the page specified
+    public void addArcToBestPage(int nameA, int nameB) {
+        Arc newArc = new Arc(nameA, nameB);
+        newArc.setPage(0);
+        int addPage = getBestPageForArc(newArc);
+        newArc.setPage(addPage);
+        ArcsPerPage[addPage].add(newArc);
+        value += objectiveFunctionAddArc(newArc, addPage);
+    }
+
+    // returns best neighbour of the MoveArc Neighbourhood
+    private int getBestPageForArc(Arc arc){
+        int bestPage = 0;
+        KPMPSolution currentBest = this;
+        KPMPSolution newSolution;
+        for(int k=0; k<ArcsPerPage.length; k++){
+            newSolution = deepClone(this);
+            newSolution.moveArc(arc, k);
+            if(newSolution.compareTo(currentBest)<0){
+                currentBest = deepClone(newSolution);
+                bestPage = k;
+            }
+        }
+        return bestPage;
     }
 
     // Uses NAME of vertex order to switch two vertices
@@ -458,7 +483,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
     public String toString(){
         String toString = "Spine-Order: ";
         for (int i = 0; i < SpineOrder.length; i++) {
-            toString += SpineOrder[i];
+            toString += SpineOrder[i] + " ";
         }
 
         toString += "\nValue: " + value;
