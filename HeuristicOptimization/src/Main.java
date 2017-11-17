@@ -4,9 +4,11 @@ import java.util.*;
 public class Main {
 
     private static int arcNumber;
+    public static final int TIMEOUT = 300; //in seconds
 
     public static void main(String[] args) {
-        long start = System.currentTimeMillis();
+        //StopwatchCPU time = new StopwatchCPU();
+        //long start = System.currentTimeMillis();
         try {
             KPMPInstance inst = KPMPInstance.readInstance("instances/instance-05.txt");
 
@@ -17,9 +19,11 @@ public class Main {
             }
             KPMPSolution sol = deterministicConstruction(inst);
             System.out.println(sol);
-            sol = sol.simulatedAnnealing(1, sol.getValue(), -1, -1, 0.95, arcNumber*arcNumber*inst.getK());
-
+            //sol = sol.simulatedAnnealing(1, sol.getValue(), -1, -1, 0.95, arcNumber*arcNumber*inst.getK());
+            sol = sol.localSearch(0,1,false,-1);
+            //sol = sol.vndSearch();
             System.out.println(sol);
+            //System.out.println(time.elapsedTime());
 
 
 
@@ -64,8 +68,8 @@ public class Main {
         }catch(Exception e){
             e.printStackTrace();
         }
-        long end = System.currentTimeMillis();
-        System.out.println(end-start);
+        //long end = System.currentTimeMillis();
+        //System.out.println(end-start);
     }
 
     // this creates an initial solution which is hopefully not all that bad

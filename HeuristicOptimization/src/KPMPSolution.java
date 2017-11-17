@@ -1,3 +1,4 @@
+import javafx.scene.paint.Stop;
 import org.omg.CORBA.NO_IMPLEMENT;
 
 import java.io.*;
@@ -356,24 +357,28 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
     * TODO: limit this to 15 minutes CPU time
     */
     public KPMPSolution localSearch(int step, int neighborhood, boolean improvementRequired, int maxIterations){
+        StopwatchCPU time = new StopwatchCPU();
         KPMPSolution bestSolution = this;
         KPMPSolution solution = this;
-        boolean cont = true;
+        boolean stop = false;
         int iteration = maxIterations;
 
-        while(cont) {
+        while(!stop) {
             solution = solution.getNeighbor(step, neighborhood);
             if(solution.compareTo(bestSolution) < 0){
                 bestSolution = deepClone(solution);
             }
             else{
                 if(improvementRequired){
-                    cont = false;
+                    stop = true;
                 }
             }
             if(iteration > 0){
                     iteration -= 1;
-                    cont = !(iteration == 0);
+                    stop = (iteration == 0);
+            }
+            if(time.elapsedTime() > Main.TIMEOUT){
+                stop = true;
             }
 
         }
@@ -381,7 +386,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
     }
 
     public KPMPSolution vndSearch(){
-
+        StopwatchCPU time = new StopwatchCPU();
         KPMPSolution currentSolution = this;
         int neighborhood = -1; //start with the smaller neighborhood, in our case spine swap (<0)
 
@@ -394,7 +399,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
             else{
                 neighborhood++;
             }
-        }while(neighborhood <= 0);
+        }while(time.elapsedTime() < Main.TIMEOUT || neighborhood <= 0);
         return currentSolution;
     }
 
@@ -409,7 +414,8 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
       * int equilibrium - the number of iterations before the temperature is changed
       */
     public KPMPSolution simulatedAnnealing(int neighborhood, double initialTemp, double endTemp, int maxNoImprovement, double alpha, int givenEquilibrium){
-        long timeStart  = System.currentTimeMillis();
+        //long timeStart  = System.currentTimeMillis();
+        StopwatchCPU time = new StopwatchCPU();
         int t = 0;
         double temperature = initialTemp;
         boolean stop = false;
@@ -452,10 +458,11 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
                 System.out.println("tempchange" + temperature);
                 equilibrium = givenEquilibrium;
                 temperature = temperature * alpha;
-                long timeNow = System.currentTimeMillis();
-                long timeElapsed = timeNow - timeStart;
-                if (timeElapsed > 300000 || (endTemp >= 0 && temperature >= endTemp) || (maxNoImprovement >= 0 && noImprovements >= maxNoImprovement)) {
+                //long timeNow = System.currentTimeMillis();
+                double timeElapsed = time.elapsedTime();
+                if (timeElapsed > Main.TIMEOUT || (endTemp >= 0 && temperature >= endTemp) || (maxNoImprovement >= 0 && noImprovements >= maxNoImprovement)) {
                     stop = true;
+                    System.out.println("Simulated annealing took: " + timeElapsed + " seconds");
                 }
             } while (!stop);
             bw.close();
