@@ -242,17 +242,17 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
 
     // returns a random neighbour of the MoveArc Neighbourhood, not necessarily better
     public KPMPSolution getRandomArcMoveNeighbour(){
-
+        //System.out.println("getteing next random arc movement neighbour");
         Random rand = new Random();
         int randFromPageNumber;
         do{
-            randFromPageNumber = rand.nextInt(ArcsPerPage.length-1);
+            randFromPageNumber = rand.nextInt(ArcsPerPage.length);
         }while(ArcsPerPage[randFromPageNumber].size()<1);
         int randToPageNumber;
         do{
-            randToPageNumber = rand.nextInt(ArcsPerPage.length-1);
+            randToPageNumber = rand.nextInt(ArcsPerPage.length);
         }while(randFromPageNumber==randToPageNumber);
-        int randArcNumber = rand.nextInt(ArcsPerPage[randFromPageNumber].size()-1);
+        int randArcNumber = rand.nextInt(ArcsPerPage[randFromPageNumber].size());
         KPMPSolution newSolution = deepClone(this);
         Arc randArc = newSolution.getArcsPerPage()[randFromPageNumber].get(randArcNumber);
         newSolution.moveArc(randArc, randToPageNumber);
@@ -318,11 +318,11 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
     }
     /*
     * step specifies step function strategy (0 for random, <0 for first, >0 for best)
-    * neighborhood specifies which neighborhood structure is being used to determine the neighbor (<0 for spine swap, >=0 for arc movement)
+    * neighborhood specifies which neighborhood structure is being used to determine the neighbor (>=0 for spine swap, <0 for arc movement)
      */
     private KPMPSolution getNeighbor(int step, int neighborhood){
 
-        if(neighborhood >= 0){
+        if(neighborhood < 0){
             if(step == 0){
                 return this.getRandomArcMoveNeighbour();
             }
@@ -408,33 +408,61 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
       * over the last maxNoImprovement number of iterations
       * int equilibrium - the number of iterations before the temperature is changed
       */
-    public KPMPSolution simulatedAnnealing(int neighborhood, double initialTemp, double endTemp, int maxNoImprovement, double alpha, int equilibrium){
+    public KPMPSolution simulatedAnnealing(int neighborhood, double initialTemp, double endTemp, int maxNoImprovement, double alpha, int givenEquilibrium){
+        long timeStart  = System.currentTimeMillis();
         int t = 0;
         double temperature = initialTemp;
         boolean stop = false;
         KPMPSolution currentSolution = this;
         int noImprovements = 0;
+        int equilibrium = givenEquilibrium;
+        int visualizationCounter = 0;
+        try {
+            BufferedWriter bw = null;
+            FileWriter fw = null;
+            fw = new FileWriter("result.txt");
+            bw = new BufferedWriter(fw);
 
-        do{
-            do{
-                KPMPSolution nextSolution = currentSolution.getNeighbor(0, neighborhood);
-                if(nextSolution.compareTo(currentSolution)<0){
-                    currentSolution = nextSolution;
-                }else{
+            bw.write("" + visualizationCounter++ + "; " + currentSolution.getValue() + ";\n");
+
+            do {
+                do {
                     double r = Math.random();
-                    if(r < exp(abs(currentSolution.getValue()-nextSolution.getValue())/temperature)){
-                        currentSolution = nextSolution;
-                        noImprovements++;
+                    KPMPSolution nextSolution;
+                    if (r <0.05) {
+                        nextSolution = currentSolution.getNeighbor(0, 1);
+                    } else {
+                        nextSolution = currentSolution.getNeighbor(0, -1);
                     }
+                    if (nextSolution.compareTo(currentSolution) < 0) {
+                        currentSolution = nextSolution;
+                        bw.write("" + visualizationCounter + "; " + currentSolution.getValue() + ";\n");
+                    } else {
+                        r = Math.random();
+                        if (r < exp(-abs(currentSolution.getValue() - nextSolution.getValue()) / temperature)) {
+                            currentSolution = nextSolution;
+                            noImprovements++;
+                            bw.write("" + visualizationCounter + "; " + currentSolution.getValue() + ";\n");
+                        }
+                    }
+                    visualizationCounter++;
+                    t++;
+                    equilibrium--;
+                } while (equilibrium != 0);
+                System.out.println("tempchange" + temperature);
+                equilibrium = givenEquilibrium;
+                temperature = temperature * alpha;
+                long timeNow = System.currentTimeMillis();
+                long timeElapsed = timeNow - timeStart;
+                if (timeElapsed > 300000 || (endTemp >= 0 && temperature >= endTemp) || (maxNoImprovement >= 0 && noImprovements >= maxNoImprovement)) {
+                    stop = true;
                 }
-                t++;
-                equilibrium--;
-            }while(equilibrium!=0);
-            temperature = temperature * alpha;
-            if((endTemp >=0 && temperature >= endTemp) || (maxNoImprovement>=0 && noImprovements>=maxNoImprovement)){
-                stop = true;
-            }
-        }while(!stop);
+            } while (!stop);
+            bw.close();
+            fw.close();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
 
         return currentSolution;
     }
@@ -482,8 +510,9 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
     @Override
     public String toString(){
         String toString = "Spine-Order: ";
+        ArrayList<Integer> spineList = new ArrayList<Integer>() {{ for (int i : SpineOrder) add(i); }};
         for (int i = 0; i < SpineOrder.length; i++) {
-            toString += SpineOrder[i] + " ";
+            toString += spineList.indexOf(i) + " ";
         }
 
         toString += "\nValue: " + value;

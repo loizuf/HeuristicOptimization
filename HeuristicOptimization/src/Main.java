@@ -3,17 +3,24 @@ import java.util.*;
 
 public class Main {
 
+    private static int arcNumber;
+
     public static void main(String[] args) {
-
+        long start = System.currentTimeMillis();
         try {
-            KPMPInstance inst = KPMPInstance.readInstance("instances/instance-07.txt");
+            KPMPInstance inst = KPMPInstance.readInstance("instances/instance-05.txt");
 
-            System.out.println(deterministicConstruction(inst));
-            System.out.println(randomConstruction(inst));
-            System.out.println(randomConstruction(inst));
-            System.out.println(randomConstruction(inst));
-            System.out.println(randomConstruction(inst));
-            System.out.println(randomConstruction(inst));
+            List<List<Integer>> list = inst.getAdjacencyList();
+            arcNumber = 0;
+            for (int i = 0; i < list.size(); i++) {
+                arcNumber += list.get(i).size();
+            }
+            KPMPSolution sol = deterministicConstruction(inst);
+            System.out.println(sol);
+            sol = sol.simulatedAnnealing(1, sol.getValue(), -1, -1, 0.95, arcNumber*arcNumber*inst.getK());
+
+            System.out.println(sol);
+
 
 
 
@@ -57,6 +64,8 @@ public class Main {
         }catch(Exception e){
             e.printStackTrace();
         }
+        long end = System.currentTimeMillis();
+        System.out.println(end-start);
     }
 
     // this creates an initial solution which is hopefully not all that bad
@@ -170,10 +179,7 @@ public class Main {
 
         // distribute arcs among pages
         // seperate the arc set into k random subsets
-        int arcNumber = 0;
-        for (int i = 0; i < list.size(); i++) {
-            arcNumber += list.get(i).size();
-        }
+
         int[] rands = new int[arcNumber];
         for (int i = 0; i < arcNumber; i++) {
             rands[i] = i%inst.getK();
