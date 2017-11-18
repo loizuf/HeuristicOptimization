@@ -125,6 +125,15 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         value += objectiveFunctionAddArc(newArc, addPage);
     }
 
+    public void addArcToRandomPage(int nameA, int nameB) {
+        Arc newArc = new Arc(nameA, nameB);
+        Random r = new Random();
+        int addPage = r.nextInt(ArcsPerPage.length);
+        newArc.setPage(addPage);
+        ArcsPerPage[addPage].add(newArc);
+        value += objectiveFunctionAddArc(newArc, addPage);
+    }
+
     // returns best neighbour of the MoveArc Neighbourhood
     private int getBestPageForArc(Arc arc){
         int bestPage = 0;
