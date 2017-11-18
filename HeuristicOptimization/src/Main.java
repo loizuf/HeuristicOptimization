@@ -9,12 +9,12 @@ public class Main {
 
     public static void main(String[] args) {
 
-       // for (int j = 11; j < 16; j++) {
+        for (int j = 1; j < 16; j++) {
 
             try {
-                String path = "instances/instance-01.txt";
-                //if (j<10) path += "0";
-                //path += j + ".txt";
+                String path = "instances/instance-";
+                if (j<10) path += "0";
+                path += j + ".txt";
                 KPMPInstance inst = KPMPInstance.readInstance(path);
 
                 List<List<Integer>> list = inst.getAdjacencyList();
@@ -24,17 +24,17 @@ public class Main {
                 }
                 KPMPSolution sol = deterministicConstruction(inst);
                 //System.out.println(sol);
-                //sol = sol.simulatedAnnealing(1, sol.getValue(), -1, -1, 0.95, arcNumber*arcNumber*inst.getK());
+                sol = sol.simulatedAnnealing(1, sol.getValue(), 0.0000000001, -1, 0.95, arcNumber);
                 //sol = sol.localSearch(0,1,false,-1);
                 //sol = sol.vndSearch();
                 //System.out.println(sol);
                 //System.out.println(time.elapsedTime());
 
-                FileWriter fw = new FileWriter(inst.getName() + "_deterministic.txt");
+                FileWriter fw = new FileWriter(inst.getName() + "_SA.txt");
                 //fw.write(sol.toString());
                 getSolutionWriter(sol).write(fw);
                 fw.close();
-                System.out.println(path + " done!");
+                System.out.println(path + " done!\n" + sol.toString() + "\n\n");
 
 
                // getSolutionWriter(sol).print();
@@ -80,7 +80,7 @@ public class Main {
             }
             //long end = System.currentTimeMillis();
             //System.out.println(end-start);
-        //}
+        }
     }
 
     // this creates an initial solution which is hopefully not all that bad

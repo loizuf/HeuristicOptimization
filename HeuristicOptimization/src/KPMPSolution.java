@@ -477,12 +477,11 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
                     t++;
                     equilibrium--;
                 } while (equilibrium != 0);
-                System.out.println("tempchange" + temperature);
+                //System.out.println("tempchange" + temperature);
                 equilibrium = givenEquilibrium;
                 temperature = temperature * alpha;
                 //long timeNow = System.currentTimeMillis();
                 double timeElapsed = time.elapsedTime();
-                if (timeElapsed > Main.TIMEOUT || (endTemp >= 0 && temperature >= endTemp) || (maxNoImprovement >= 0 && noImprovements >= maxNoImprovement)) {
                 if (timeElapsed > Main.TIMEOUT || (endTemp >= 0 && temperature < endTemp) || (maxNoImprovement >= 0 && noImprovements >= maxNoImprovement)) {
                     stop = true;
                     System.out.println("Simulated annealing took: " + timeElapsed + " seconds");
@@ -510,7 +509,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         }
         average = average/ArcsPerPage.length;
         double initialAcceptance = initAcc;
-        return -(average/Math.log(initialAcceptance));
+        return (average/Math.log(initialAcceptance));
     }
 
     // checks two arcs for crossing
