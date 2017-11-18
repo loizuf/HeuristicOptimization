@@ -141,7 +141,7 @@ public class Main {
             }
         });
         for (int i = 0; i < array2.length; i++) {
-            sol.addArcToBestPage(array2[i][0], array2[i][1]);
+            sol.addArc(array2[i][0], array2[i][1], i%inst.getK());
         }
         return sol;
 
@@ -166,7 +166,7 @@ public class Main {
         for(int i = 0; i < mat.length; i++){
             for (int j = i; j < mat[i].length; j++) {
                 if(mat[i][j]){
-                        sol.addArcToBestPage(i, j);
+                        sol.addArcToRandomPage(i, j);
                     }
                 }
             }

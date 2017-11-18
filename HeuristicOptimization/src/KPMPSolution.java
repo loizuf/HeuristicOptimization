@@ -483,6 +483,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
                 //long timeNow = System.currentTimeMillis();
                 double timeElapsed = time.elapsedTime();
                 if (timeElapsed > Main.TIMEOUT || (endTemp >= 0 && temperature >= endTemp) || (maxNoImprovement >= 0 && noImprovements >= maxNoImprovement)) {
+                if (timeElapsed > Main.TIMEOUT || (endTemp >= 0 && temperature < endTemp) || (maxNoImprovement >= 0 && noImprovements >= maxNoImprovement)) {
                     stop = true;
                     System.out.println("Simulated annealing took: " + timeElapsed + " seconds");
                 }
