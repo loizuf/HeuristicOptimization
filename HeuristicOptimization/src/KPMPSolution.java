@@ -413,23 +413,22 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
       * over the last maxNoImprovement number of iterations
       * int equilibrium - the number of iterations before the temperature is changed
       */
-    public KPMPSolution simulatedAnnealing(int neighborhood, double initialTemp, double endTemp, int maxNoImprovement, double alpha, int givenEquilibrium){
+    public KPMPSolution simulatedAnnealing(int neighborhood, double initAccProb, double endTemp, int maxNoImprovement, double alpha, int givenEquilibrium){
         //long timeStart  = System.currentTimeMillis();
+
         StopwatchCPU time = new StopwatchCPU();
         int t = 0;
-        double temperature = initialTemp;
+        double temperature = getInitialTemperature(initAccProb);
         boolean stop = false;
         KPMPSolution currentSolution = this;
         int noImprovements = 0;
         int equilibrium = givenEquilibrium;
         int visualizationCounter = 0;
+        int bestValue = currentSolution.value;
         try {
-            BufferedWriter bw = null;
             FileWriter fw = null;
             fw = new FileWriter("result.txt");
-            bw = new BufferedWriter(fw);
 
-            bw.write("" + visualizationCounter++ + "; " + currentSolution.getValue() + ";\n");
 
             do {
                 do {
@@ -442,13 +441,15 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
                     }
                     if (nextSolution.compareTo(currentSolution) < 0) {
                         currentSolution = nextSolution;
-                        bw.write("" + visualizationCounter + "; " + currentSolution.getValue() + ";\n");
+                        if(bestValue > currentSolution.value){
+                            bestValue = currentSolution.value;
+                            fw.write("Better: " + visualizationCounter + "; " + currentSolution.getValue() + ";\n");
+                        }
                     } else {
                         r = Math.random();
                         if (r < exp(-abs(currentSolution.getValue() - nextSolution.getValue()) / temperature)) {
                             currentSolution = nextSolution;
                             noImprovements++;
-                            bw.write("" + visualizationCounter + "; " + currentSolution.getValue() + ";\n");
                         }
                     }
                     visualizationCounter++;
@@ -465,13 +466,27 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
                     System.out.println("Simulated annealing took: " + timeElapsed + " seconds");
                 }
             } while (!stop);
-            bw.close();
             fw.close();
         }catch(Exception e){
             e.printStackTrace();
         }
 
         return currentSolution;
+    }
+
+    private double getInitialTemperature(double initAcc) {
+        double average = 0;
+        for (int i = 0; i < ArcsPerPage.length; i++) {
+            KPMPSolution solution;
+            do{
+                solution = this.getRandomArcMoveNeighbour();
+
+            } while (solution.value<= this.value);
+            average += solution.value;
+        }
+        average = average/ArcsPerPage.length;
+        double initialAcceptance = initAcc;
+        return -(average/Math.log(initialAcceptance));
     }
 
     // checks two arcs for crossing
