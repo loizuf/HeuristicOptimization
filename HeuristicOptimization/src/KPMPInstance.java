@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import sun.security.provider.certpath.AdjacencyList;
 
 public class KPMPInstance {
+
+	private String name;
 	private int K;
 	private int numVertices;
 	private List<List<Integer>> adjacencyList = new ArrayList<>();
@@ -28,6 +30,7 @@ public class KPMPInstance {
 		inst.numVertices = s.nextInt();
 		s.skip("(#.*[\r\n]+)*");
 		inst.K = s.nextInt();
+		inst.name = path.split("/")[1];
 		
 		
 		for(int i=0; i<inst.numVertices; ++i) {
@@ -68,6 +71,10 @@ public class KPMPInstance {
 
 	public int getNumVertices() {
 		return numVertices;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 	public List<List<Integer>> getAdjacencyList() {

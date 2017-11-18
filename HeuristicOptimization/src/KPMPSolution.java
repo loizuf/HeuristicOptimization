@@ -71,9 +71,11 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
     private int value;
     private int[] SpineOrder;
     private ArrayList<Arc>[] ArcsPerPage;
+    private String instName;
 
     // Constructor
-    public KPMPSolution(int pageNumber, int vertexNumber) {
+    public KPMPSolution(int pageNumber, int vertexNumber, String name) {
+        instName = name;
         SpineOrder = new int[vertexNumber];
         ArcsPerPage = new ArrayList[pageNumber];
         for(int i = 0; i < pageNumber; i++){
@@ -426,8 +428,17 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         int visualizationCounter = 0;
         int bestValue = currentSolution.value;
         try {
-            FileWriter fw = null;
-            fw = new FileWriter("result.txt");
+            FileWriter fwbest = null;
+            FileWriter fwcurrent = null;
+            BufferedWriter bwbest = null;
+            BufferedWriter bwcurrent = null;
+            fwbest = new FileWriter("_bestResult.csv");
+            fwcurrent = new FileWriter("currentResult.csv");
+            bwbest = new BufferedWriter(fwbest);
+            bwcurrent = new BufferedWriter(fwcurrent);
+            bwbest.write("index;value;\n");
+            bwcurrent.write("index;value;\n");
+
 
 
             do {
@@ -443,7 +454,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
                         currentSolution = nextSolution;
                         if(bestValue > currentSolution.value){
                             bestValue = currentSolution.value;
-                            fw.write("Better: " + visualizationCounter + "; " + currentSolution.getValue() + ";\n");
+                            bwbest.write(visualizationCounter + ";" + currentSolution.getValue() + ";\n");
                         }
                     } else {
                         r = Math.random();
@@ -452,6 +463,7 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
                             noImprovements++;
                         }
                     }
+                    bwcurrent.write(visualizationCounter + ";" + currentSolution.getValue() + ";\n");
                     visualizationCounter++;
                     t++;
                     equilibrium--;
@@ -466,7 +478,9 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
                     System.out.println("Simulated annealing took: " + timeElapsed + " seconds");
                 }
             } while (!stop);
-            fw.close();
+
+            bwbest.close();
+            fwbest.close();
         }catch(Exception e){
             e.printStackTrace();
         }
