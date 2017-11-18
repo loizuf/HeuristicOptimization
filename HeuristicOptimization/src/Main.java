@@ -5,18 +5,16 @@ import java.util.*;
 public class Main {
 
     private static int arcNumber;
-    public static final int TIMEOUT = 300; //in seconds
+    public static final int TIMEOUT = 60; //in seconds
 
     public static void main(String[] args) {
-        //StopwatchCPU time = new StopwatchCPU();
-        //long start = System.currentTimeMillis();
-        for (int j = 11; j < 16; j++) {
+
+       // for (int j = 11; j < 16; j++) {
 
             try {
-                String path = "instances/instance-";
-                if (j<10) path += "0";
-                path += j + ".txt";
-                System.out.println(path);
+                String path = "instances/instance-01.txt";
+                //if (j<10) path += "0";
+                //path += j + ".txt";
                 KPMPInstance inst = KPMPInstance.readInstance(path);
 
                 List<List<Integer>> list = inst.getAdjacencyList();
@@ -33,13 +31,13 @@ public class Main {
                 //System.out.println(time.elapsedTime());
 
                 FileWriter fw = new FileWriter(inst.getName() + "_deterministic.txt");
-                fw.write(sol.toString());
+                //fw.write(sol.toString());
+                getSolutionWriter(sol).write(fw);
                 fw.close();
                 System.out.println(path + " done!");
 
 
-
-
+               // getSolutionWriter(sol).print();
 
             /*
             int[] order = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -82,7 +80,7 @@ public class Main {
             }
             //long end = System.currentTimeMillis();
             //System.out.println(end-start);
-        }
+        //}
     }
 
     // this creates an initial solution which is hopefully not all that bad
@@ -112,8 +110,6 @@ public class Main {
         }
         sol.setNewSpineOrder(order);
 
-        System.out.println("test");
-
         // The part below this point sorts arcs by their length
         int arcNumber = 0;
         for (int i = 0; i < list.size(); i++) {
@@ -133,7 +129,6 @@ public class Main {
             }
         }
         // This sorts arcs by their length
-        System.out.println("test2");
 
         java.util.Arrays.sort(array2, new java.util.Comparator<int[]>() {
             public int compare(int[] a, int[] b) {
@@ -185,6 +180,17 @@ public class Main {
             ar[index] = ar[i];
             ar[i] = a;
         }
+    }
+
+    static KPMPSolutionWriter getSolutionWriter(KPMPSolution solution){
+        KPMPSolutionWriter solutionWriter = new KPMPSolutionWriter(solution.getArcsPerPage().length);
+        solutionWriter.setSpineOrder(solution.getVertexOrder());
+
+        List<int[]> arcs = solution.getAllArcs();
+        for (int[] arc: arcs) {
+            solutionWriter.addEdgeOnPage(arc[0], arc[1],arc[2]);
+        }
+        return solutionWriter;
     }
 
 }

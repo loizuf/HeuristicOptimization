@@ -548,6 +548,30 @@ public class KPMPSolution implements Comparable<KPMPSolution>, Serializable {
         }
     }
 
+    public List<Integer> getVertexOrder(){
+        ArrayList<Integer> spineList = new ArrayList<Integer>() {{ for (int i : SpineOrder) add(i); }};
+        List<Integer> spineOrder = new LinkedList<>();
+        for (int i = 0; i < spineList.size(); i++) {
+            spineOrder.add(spineList.indexOf(i));
+        }
+        return spineOrder;
+    }
+
+    public List<int[]> getAllArcs(){
+        List<int[]> arcs = new ArrayList<>();
+
+        for(int i = 0; i<ArcsPerPage.length; i++){
+            for(int j = 0; j<ArcsPerPage[i].size(); j++){
+                int[] arc = new int[3];
+                arc[0] = ArcsPerPage[i].get(j).getStart();
+                arc[1] = ArcsPerPage[i].get(j).getEnd();
+                arc[2] = ArcsPerPage[i].get(j).getPage();
+                arcs.add(arc);
+            }
+        }
+        return arcs;
+    }
+
     @Override
     public int compareTo(KPMPSolution o) {
         return Integer.compare(value, o.getValue());
